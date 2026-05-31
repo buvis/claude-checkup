@@ -1,0 +1,53 @@
+---
+name: audit-filesystem
+description: >-
+  Use to reclaim disk and find stale config under ~/.claude: stale/orphaned plugin
+  caches, orphan and dormant project dirs, memory index drift and stale memories.
+  Triggers on "audit filesystem", "audit plugins", "audit project orphans", "audit memory".
+---
+
+# Audit Filesystem
+
+Find reclaimable and stale state under the Claude config dir: plugin caches,
+project-config orphans, and memory index/staleness. Deterministic work runs in
+`scripts/audit_filesystem.py`; this skill runs it and turns findings into safe,
+actionable cleanup.
+
+## Step 1: Run the audit
+
+```bash
+python3 "${CLAUDE_SKILL_DIR}/scripts/audit_filesystem.py"
+```
+
+Capture stdout JSON `{audit, scanned, findings, summary}`; each finding is the
+shared schema `{severity, title, fix, file, line, audit}` (see
+`reference/conventions.md`). Per the script-failure contract there: if it exits
+non-zero, surface stderr and stop.
+
+## Step 2: Present findings
+
+Group by severity, most urgent first. Render each as
+`- [SEVERITY] {title} — {fix}`. Omit empty groups. End with `summary` counts.
+
+Safety: `INFO` "source path could not be resolved" means the project dir name
+could not be decoded to a verified path. **Never** offer to delete these -- the
+`fix` field tells the user to verify manually. Only `LOW` "orphan project config"
+findings (whose source path was checked and is gone) carry a real `rm -rf` fix.
+
+## Step 3: Optional deeper memory review (model-led)
+
+The script covers index consistency and age. If the user wants more, you may
+additionally, by reading the memory files yourself:
+
+- Flag cross-project near-duplicate memories (same `name`, or descriptions that
+  clearly overlap) -- a judgment call, so do it only when asked.
+- For `reference`/`feedback` memories, spot-check that paths/files they cite
+  still exist. (Resolving a project's source dir from its config-dir name is
+  lossy, so treat misses as "verify manually", not as confirmed breakage.)
+
+## Step 4: Offer cleanup
+
+Follow the consent/safety boundary in `reference/conventions.md`. Group the
+`rm -rf` commands for stale plugin versions and confirmed orphan project configs
+for easy copy-paste; confirm before deleting. For stale memories, offer to
+review and remove individually. Take no destructive action without confirmation.
