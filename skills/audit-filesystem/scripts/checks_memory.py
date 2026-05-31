@@ -50,22 +50,24 @@ def _mtime(path: Path) -> datetime:
 def check_memory(config: Path, now: datetime) -> list[Finding]:
     findings: list[Finding] = []
     for memory_dir in sorted(config.glob("projects/*/memory")):
-        index_file = memory_dir / "MEMORY.md"
-        if not index_file.is_file():
+        if not memory_dir.is_dir():
             continue
         project = memory_dir.parent.name
-        referenced = parse_index(index_file.read_text(encoding="utf-8", errors="replace"))
         present = {p.name for p in memory_dir.glob("*.md") if p.name != "MEMORY.md"}
 
-        for ref in sorted(referenced - present):
-            findings.append(Finding(
-                "MEDIUM", f"orphan index entry in {project}: MEMORY.md references missing {ref}",
-                "Remove the stale pointer from MEMORY.md", str(index_file), audit="filesystem"))
-        for name in sorted(present - referenced):
-            findings.append(Finding(
-                "LOW", f"missing index entry in {project}: {name} is not listed in MEMORY.md",
-                "Add a pointer line to MEMORY.md", str(memory_dir / name), audit="filesystem"))
+        index_file = memory_dir / "MEMORY.md"
+        if index_file.is_file():
+            referenced = parse_index(index_file.read_text(encoding="utf-8", errors="replace"))
+            for ref in sorted(referenced - present):
+                findings.append(Finding(
+                    "MEDIUM", f"orphan index entry in {project}: MEMORY.md references missing {ref}",
+                    "Remove the stale pointer from MEMORY.md", str(index_file), audit="filesystem"))
+            for name in sorted(present - referenced):
+                findings.append(Finding(
+                    "LOW", f"missing index entry in {project}: {name} is not listed in MEMORY.md",
+                    "Add a pointer line to MEMORY.md", str(memory_dir / name), audit="filesystem"))
 
+        # Type and staleness run on every memory file, indexed or not.
         findings.extend(_staleness(memory_dir, present, project, now))
     return findings
 

@@ -2,7 +2,7 @@
 
 [![GitHub license](https://img.shields.io/github/license/buvis/claude-checkup)](https://github.com/buvis/claude-checkup/blob/master/LICENSE)
 
-A health-check toolkit for [Claude Code](https://claude.ai/code). Five focused
+A health-check toolkit for [Claude Code](https://claude.ai/code). Six focused
 audit skills plus a single orchestrator that runs them all, prints a dashboard,
 and produces a prioritized remediation plan. Deterministic work runs in helper
 scripts (so audits are reproducible); judgment calls stay with the model.

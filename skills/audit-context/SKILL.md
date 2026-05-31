@@ -37,6 +37,9 @@ Report the `totals` (always_loaded, hidden_tax, on_demand, loaded_overhead) and
 counts are estimates, and settings.json is excluded (it is not loaded into
 context).
 
+If `pct_of_window` exceeds 30%, call it out as a warning that always-loaded
+overhead is high and worth trimming.
+
 Caveat to state: project `CLAUDE.md`/memory files are counted per project, but
 only the *active* project's are loaded in any one session -- so the sum is an
 upper bound across projects, not simultaneous load.

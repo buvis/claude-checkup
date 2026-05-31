@@ -38,6 +38,8 @@ def flatten_hooks(settings: dict) -> list[dict]:
         if not isinstance(entries, list):
             continue
         for entry in entries:
+            if not isinstance(entry, dict):
+                continue
             hook_list = entry.get("hooks") or ([entry] if entry.get("type") else [])
             for hook in hook_list:
                 out.append({
@@ -73,6 +75,12 @@ def _scan_script(script: Path, event: str) -> list[Finding]:
             findings.append(Finding("HIGH", "variable interpolation in hook script",
                                     "Parse stdin JSON with jq instead of interpolating",
                                     src, i, "config"))
+        for pattern, sev, desc in _SUPPRESSION:
+            if pattern.search(line):
+                findings.append(Finding(sev, f"hook script {desc}",
+                                        "Let errors propagate so failures are visible",
+                                        src, i, "config"))
+                break
         if _EXFIL.search(line):
             findings.append(Finding("MEDIUM", "possible exfiltration: HTTP POST in hook script",
                                     "Confirm this outbound request is intended", src, i, "config"))

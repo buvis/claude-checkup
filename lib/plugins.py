@@ -42,6 +42,8 @@ def read_installed_plugins(config: Path) -> dict:
         data = json.loads(manifest.read_text(encoding="utf-8"))
     except (json.JSONDecodeError, OSError):
         return {}
+    if not isinstance(data, dict):
+        return {}
     out: dict = {}
     for key, records in data.get("plugins", {}).items():
         if isinstance(records, list) and records:

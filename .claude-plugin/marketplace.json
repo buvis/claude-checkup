@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "claude-checkup",
-      "description": "13 audit skills + orchestrator that produces a prioritized remediation plan for your Claude Code setup",
+      "description": "6 audit skills + orchestrator that produces a prioritized remediation plan for your Claude Code setup",
       "version": "0.1.2",
       "author": {
         "name": "buvis"

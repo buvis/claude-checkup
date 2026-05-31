@@ -16,8 +16,9 @@ from claude_paths import any_usage_telemetry, iter_jsonl
 from findings import Finding
 
 SENSITIVE_PATHS = ("~/.ssh", "~/.aws", "~/.gnupg", "/etc/")
+DESTRUCTIVE_BASH = frozenset({"docker", "kubectl", "git"})
 _UNRESTRICTED = re.compile(r"^(Bash|Write|Edit|Read)\(\*{1,2}(:\*)?\)$")
-_BROAD_WRITE = re.compile(r"^(Write|Edit)\((~|\.)?/?\*\*\)$")
+_ROOT_WILDCARD = re.compile(r"^[A-Za-z_]+\(/\*\)$")
 _MCP_WILDCARD = re.compile(r"^mcp__[^_]+__\*$|^mcp__\*")
 _BOUNDED_BASH = re.compile(r"^Bash\([^*]+:\*\)$|^Bash\([^*]+ \*\)$")
 _BROAD_READ = re.compile(r"^Read\((~|\.).*\*\*\)$")
@@ -32,6 +33,31 @@ def split_permission(entry: str) -> tuple[str, str | None]:
     return entry, None
 
 
+def _bash_tool(entry: str) -> str:
+    """`Bash(git push:*)` -> "git"; the leading command word of a Bash grant."""
+    _tool, pattern = split_permission(entry)
+    return re.split(r"[ :]", (pattern or "").strip())[0]
+
+
+def _is_broad_write(entry: str) -> bool:
+    """A Write/Edit grant whose wildcard sits <=1 segment under a broad anchor.
+
+    HIGH: Edit(./**), Write(~/git/**), Edit(/tmp/**) -- write a whole broad tree.
+    Not broad: Write(./dev/local/**), Write(~/git/**/dev/local/**) -- scoped to a
+    named subdirectory, so they fall through to LOW like the old skill judged.
+    """
+    if not (entry.startswith("Write(") or entry.startswith("Edit(")):
+        return False
+    _tool, pattern = split_permission(entry)
+    if not pattern or "*" not in pattern:
+        return False
+    # Count specific (non-wildcard) path segments anywhere in the pattern. A grant
+    # confined to a named subdir (./dev/local/**, ~/git/**/dev/local/**) has >=2;
+    # a whole-tree grant (./**, ~/git/**, /tmp/**) has <=1.
+    segments = [s for s in pattern.split("/") if s not in ("", "~", ".", "..") and "*" not in s]
+    return len(segments) <= 1
+
+
 def classify_permission(entry: str) -> tuple[str, str, str]:
     """Return (severity, reason, fix) for one allow-list entry."""
     if any(sp in entry for sp in SENSITIVE_PATHS):
@@ -40,10 +66,16 @@ def classify_permission(entry: str) -> tuple[str, str, str]:
     if _UNRESTRICTED.match(entry):
         return ("CRITICAL", f"{entry} grants unrestricted access",
                 "Restrict to specific commands or paths")
+    if _ROOT_WILDCARD.match(entry):
+        return ("HIGH", f"{entry} uses a wildcard root path",
+                "Restrict to specific directories")
     if entry.startswith("Bash(sudo"):
         return ("HIGH", f"{entry} permits privileged commands",
                 "Avoid blanket sudo grants")
-    if _BROAD_WRITE.match(entry) or _MCP_WILDCARD.match(entry):
+    if entry.startswith("Bash(") and _bash_tool(entry) in DESTRUCTIVE_BASH:
+        return ("HIGH", f"{entry} grants all args to a destructive tool",
+                "Scope to specific subcommands")
+    if _is_broad_write(entry) or _MCP_WILDCARD.match(entry):
         return ("HIGH", f"{entry} is a broad write/tool wildcard",
                 "Scope to specific paths or tools")
     if _BROAD_READ.match(entry) or _BOUNDED_BASH.match(entry) or entry.startswith("WebFetch("):

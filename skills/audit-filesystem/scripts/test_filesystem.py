@@ -88,6 +88,15 @@ def test_check_memory_stale_project_memory(tmp_path):
     assert any("project memory is 60d old" in f.title for f in check_memory(tmp_path, NOW))
 
 
+def test_check_memory_staleness_runs_without_index(tmp_path):
+    # regression: a memory dir with no MEMORY.md still gets type/staleness checks
+    mem = tmp_path / "projects" / "-proj" / "memory"
+    old = mem / "old.md"
+    _write(old, "---\nname: old\nmetadata:\n  type: project\n---\nbody")
+    _set_age_days(old, 60)
+    assert any("project memory is 60d old" in f.title for f in check_memory(tmp_path, NOW))
+
+
 # --- integration ---
 
 

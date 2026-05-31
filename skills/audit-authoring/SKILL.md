@@ -53,6 +53,17 @@ Do not re-flag skill-authoring quality that the dedicated `create-skill` validat
 owns (paragraph duplication, keyword guardrail heuristics) -- those produced more
 noise than signal and were removed.
 
+### Structural hygiene (model)
+
+For each skill directory, also flag these quick checks:
+
+- non-executable files under `scripts/` (recommend `chmod +x`);
+- a stray `README.md` or `CHANGELOG.md` in the skill dir (these do not belong in
+  a skill);
+- `@`-path force-load references in the body (e.g. `@~/.claude/...`,
+  `@./references/...`) that pull files into context -- recommend referencing
+  skills by name instead.
+
 ## Part 2: Rules
 
 Read global rules (`~/.claude/rules/**/*.md`), `~/.claude/CLAUDE.md`, and any

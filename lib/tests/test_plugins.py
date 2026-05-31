@@ -35,6 +35,12 @@ def test_read_installed_plugins_flattens_records(tmp_path):
     assert installed["superpowers@official"]["version"] == "5.1.0"
 
 
+def test_read_installed_plugins_tolerates_non_object(tmp_path):
+    (tmp_path / "plugins").mkdir()
+    (tmp_path / "plugins" / "installed_plugins.json").write_text("[1, 2, 3]")
+    assert read_installed_plugins(tmp_path) == {}
+
+
 def test_enumerate_marks_stale_versions(tmp_path):
     cache = _make_cache(tmp_path, {"official": {"superpowers": ["5.0.6", "5.1.0"]}})
     installed = {"superpowers@official": {"version": "5.1.0"}}

@@ -34,20 +34,23 @@ could not be decoded to a verified path. **Never** offer to delete these -- the
 `fix` field tells the user to verify manually. Only `LOW` "orphan project config"
 findings (whose source path was checked and is gone) carry a real `rm -rf` fix.
 
-## Step 3: Optional deeper memory review (model-led)
+## Step 3: Deeper memory review (model-led)
 
-The script covers index consistency and age. If the user wants more, you may
-additionally, by reading the memory files yourself:
+The script covers index consistency, type, and age. Complete the picture by
+reading the memory files yourself (this is part of the default audit, because
+deciding which cited tokens are real path references is a judgment call):
 
-- Flag cross-project near-duplicate memories (same `name`, or descriptions that
-  clearly overlap) -- a judgment call, so do it only when asked.
-- For `reference`/`feedback` memories, spot-check that paths/files they cite
-  still exist. (Resolving a project's source dir from its config-dir name is
-  lossy, so treat misses as "verify manually", not as confirmed breakage.)
+- For `reference` and `feedback` memories, check that the paths and files they
+  cite still exist; flag any that are gone. (Resolving a project's source dir
+  from its config-dir name is lossy, so treat a miss as "verify manually", not
+  as confirmed breakage.)
+- Flag cross-project near-duplicate memories (identical `name`, or descriptions
+  that clearly overlap).
 
 ## Step 4: Offer cleanup
 
 Follow the consent/safety boundary in `reference/conventions.md`. Group the
-`rm -rf` commands for stale plugin versions and confirmed orphan project configs
-for easy copy-paste; confirm before deleting. For stale memories, offer to
-review and remove individually. Take no destructive action without confirmation.
+`rm -rf` commands for stale plugin versions for easy copy-paste. For confirmed
+orphan project configs, offer either deletion or archiving (move to
+`~/.claude/projects-archive/`). For stale memories, offer to review and remove
+individually. Take no destructive action without confirmation.

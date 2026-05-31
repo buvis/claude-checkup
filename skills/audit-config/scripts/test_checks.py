@@ -40,6 +40,29 @@ def test_classify_broad_write_and_webfetch():
     assert classify_permission("WebFetch(*)")[0] == "MEDIUM"
 
 
+def test_classify_broad_write_with_path_prefix_is_high():
+    # regression: a write grant spanning all repos must not fall through to LOW
+    assert classify_permission("Edit(~/git/**)")[0] == "HIGH"
+    assert classify_permission("Write(~/git/**)")[0] == "HIGH"
+
+
+def test_classify_scoped_write_is_not_high():
+    # the inverse regression: a deliberately scoped write must NOT be flagged HIGH
+    assert classify_permission("Write(./dev/local/**)")[0] == "LOW"
+    assert classify_permission("Write(~/git/**/dev/local/**)")[0] == "LOW"
+
+
+def test_classify_root_wildcard_is_high():
+    assert classify_permission("Edit(/*)")[0] == "HIGH"
+    assert classify_permission("Bash(/*)")[0] == "HIGH"
+
+
+def test_classify_destructive_bash_high_benign_medium():
+    assert classify_permission("Bash(docker:*)")[0] == "HIGH"
+    assert classify_permission("Bash(git push:*)")[0] == "HIGH"
+    assert classify_permission("Bash(npm:*)")[0] == "MEDIUM"
+
+
 def test_check_permissions_flags_critical_and_missing_deny():
     raw = '{\n  "permissions": {\n    "allow": ["Bash(*)"]\n  }\n}'
     settings = json.loads(raw)
@@ -93,6 +116,22 @@ def test_flatten_includes_all_event_types():
 def test_resolve_executable_expands_claude_dir(tmp_path):
     got = resolve_executable("bash ~/.claude/hooks/x.sh", tmp_path)
     assert got == tmp_path / "hooks" / "x.sh"
+
+
+def test_flatten_hooks_skips_non_dict_entries():
+    # a malformed settings.json must not crash the audit
+    out = flatten_hooks({"hooks": {"PreToolUse": ["junk", {"hooks": [{"command": "ok"}]}]}})
+    assert out == [{"event": "PreToolUse", "matcher": "all", "command": "ok", "timeout": None}]
+
+
+def test_check_hooks_scans_script_body_for_suppression(tmp_path):
+    (tmp_path / "hooks").mkdir()
+    script = tmp_path / "hooks" / "h.sh"
+    script.write_text("#!/bin/bash\nrun_thing 2>/dev/null\n")
+    os.chmod(script, 0o755)
+    settings = {"hooks": {"Stop": [{"hooks": [{"type": "command", "command": "bash ~/.claude/hooks/h.sh"}]}]}}
+    findings = check_hooks(settings, "global", tmp_path)
+    assert any("hook script suppresses stderr" in f.title for f in findings)
 
 
 def test_check_hooks_flags_missing_script(tmp_path):
