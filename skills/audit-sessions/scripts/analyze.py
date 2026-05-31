@@ -159,18 +159,6 @@ def _check_pipe(cmd: str) -> bool:
     return bool(_BASH_PIPE_RE.search(cmd))
 
 
-def _percentile(values: list[int], p: float) -> float:
-    if not values:
-        return 0.0
-    s = sorted(values)
-    k = (len(s) - 1) * (p / 100.0)
-    f = int(k)
-    c = min(f + 1, len(s) - 1)
-    if f == c:
-        return float(s[f])
-    return s[f] + (s[c] - s[f]) * (k - f)
-
-
 # -----------------------------------------------------------------------------
 # Heuristic detectors
 # -----------------------------------------------------------------------------
@@ -568,7 +556,6 @@ def analyze(claude_dir: Path, projects_dir: Path, days: int) -> dict:
                 "latest": max(latest_dates).isoformat() if latest_dates else None,
             },
             "median_message_count": int(statistics.median(counts)) if counts else 0,
-            "p95_message_count": int(_percentile(counts, 95)) if counts else 0,
         },
         "findings": findings,
         "skill_usage": {

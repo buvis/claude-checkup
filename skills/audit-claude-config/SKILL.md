@@ -5,118 +5,80 @@ description: Use when performing a Claude Code health check or reviewing setup q
 
 # Audit Claude Config
 
-Orchestrate all audit skills into a unified health dashboard with prioritized remediation plans.
+Run the audit skills, print one dashboard, and build a prioritized remediation
+plan. Findings, severities, and the consent boundary follow
+`reference/conventions.md`.
 
-## Arguments
+## Modes
 
-Parse the optional argument to select which audits to run:
+| Argument | Runs |
+|----------|------|
+| *(none)* / `full` | every audit + `/doctor` |
+| `fast` | everything except `audit-sessions` (the slow one) |
 
-| Argument | Audits included |
-|----------|----------------|
-| *(none)* | All audits including /doctor |
-| `quick` | All except audit-sessions (slow) |
-| `security` | audit-security, audit-permissions, audit-hooks, warden:audit |
-| `health` | /doctor, audit-mcp-health, audit-plugins, audit-project-orphans, audit-settings, audit-memory, audit-skills |
-| `efficiency` | audit-context, audit-rules, audit-sessions |
+## Audit registry (run in this order: scripted/fast first, slow last)
 
-## Audit Registry
+1. `/doctor` (built-in) — run only if available
+2. `audit-config` — settings.json: permissions, hooks, secrets, MCP risk, conflicts
+3. `audit-context` — token-budget overhead
+4. `audit-filesystem` — plugin caches, project orphans, memory hygiene
+5. `audit-authoring` — skill + rule quality
+6. `audit-mcp-health` — MCP servers vs live tools
+7. `/warden:review-decisions` — run only if the warden plugin is installed
+8. `audit-sessions` — transcript patterns (skipped in `fast` mode)
 
-Run audits in this order (fast first, slow last):
+## Step 1: Run each audit
 
-1. `/doctor` (built-in) - health - fast
-2. `/audit-context` - efficiency - fast
-3. `/audit-security` - security - fast
-4. `/warden:review-decisions` - security - fast
-5. `/audit-permissions` - security - fast
-6. `/audit-hooks` - health - fast
-7. `/audit-plugins` - health - fast
-8. `/audit-project-orphans` - health - fast
-9. `/audit-mcp-health` - health - medium
-10. `/audit-memory` - health - medium
-11. `/audit-rules` - efficiency - medium
-12. `/audit-settings` - health - medium
-13. `/audit-skills` - health - medium
-14. `/audit-sessions` - efficiency - slow
+Run `/doctor` first if present; record its output (note critical issues but
+continue). For each audit in the registry, invoke it via the Skill tool and
+record: status (PASS = no findings, WARN = has findings, INFO = suggestions only,
+FAIL = the audit errored), the finding count, the critical count, and the
+findings themselves (shared schema from `reference/conventions.md`).
 
-## Execution
+`/doctor` and `/warden:review-decisions` are optional. If a tool is not
+installed, skip it silently — do not record it as FAIL. Only a real error in an
+installed audit is FAIL (per the script-failure contract).
 
-### Step 1: Run /doctor
+## Step 2: Dashboard
 
-Run the built-in `/doctor` command first. Record its output. If /doctor reports critical issues (authentication failures, disconnected services), note these but continue with the remaining audits.
-
-### Step 2: Run each audit skill
-
-For each audit in the filtered registry:
-
-1. Invoke via the Skill tool: `Skill(skill: "<audit-name>")`
-2. After the skill completes, record:
-   - **Status**: PASS (no actionable findings), WARN (has findings), INFO (suggestions only), FAIL (audit itself errored)
-   - **Finding count**: Number of distinct findings
-   - **Critical count**: Number of CRITICAL severity findings
-   - **Findings list**: Each finding as `{severity, title, details}`
-
-If a skill errors or is unavailable, record status as FAIL and continue.
-
-### Step 3: Build dashboard
-
-Print the dashboard table:
+Print one markdown table (no box-drawing), sorted by registry order:
 
 ```
-CLAUDE CODE HEALTH DASHBOARD
-=============================
-Date: {today}
-
-Audit                    Status    Findings    Critical
-─────────────────────────────────────────────────────────
-{rows sorted by registry order}
-─────────────────────────────────────────────────────────
-OVERALL                  {worst}   {total}     {total_crit}
+| Audit | Status | Findings | Critical |
+|-------|--------|----------|----------|
+| audit-config | WARN | 12 | 1 |
+| ... | ... | ... | ... |
+| OVERALL | WARN | 37 | 1 |
 ```
 
-Overall status = worst status across all audits (FAIL > WARN > INFO > PASS).
+Overall status = worst status across audits (FAIL > WARN > INFO > PASS).
 
-### Step 4: Build remediation plans
+## Step 3: Remediation plan
 
-Collect all findings across audits. Sort by severity: CRITICAL > HIGH > MEDIUM > LOW.
-
-For each finding, generate a remediation block:
-
-```
-N. [{audit name}] {title}
-   What:   {specific change}
-   Where:  {exact file path and line if possible}
-   Why:    {impact of not fixing}
-   How:    {step-by-step fix or ready-to-apply command}
-   Effort: {trivial / 5min / 30min / 1hr+}
-```
-
-To generate accurate remediation plans, read the relevant files mentioned in findings to provide exact locations and ready-to-apply fixes. Do not guess file contents.
-
-Group by severity with headers:
+Collect all findings, sort by severity (CRITICAL > HIGH > MEDIUM > LOW > INFO),
+and group under markdown headers (`### CRITICAL (fix now)`, etc.; omit empty
+groups). Render each finding:
 
 ```
-━━━ CRITICAL (fix now) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-━━━ HIGH (fix this week) ━━━━━━━━━━━━━━━━━━━━━━━━━━
-━━━ MEDIUM (fix when convenient) ━━━━━━━━━━━━━━━━━━
-━━━ LOW (backlog) ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Issue: {title} ({file}:{line})
+  Fix:   {fix}
 ```
 
-### Step 5: Save report
+The `fix` field is usually ready to apply. To make fixes exact, read the files a
+finding points at rather than guessing. Do not propose deletions for INFO
+"could not determine" findings.
 
-Save the full report to `dev/local/audit-results/{YYYY-MM-DD}.md` using the Write tool. Include:
-- Dashboard table
-- All remediation plans
-- Summary line: `{total} findings: {crit} critical, {high} high, {med} medium, {low} low`
+## Step 4: Save the report
 
-If a previous report exists in `dev/local/audit-results/`, compare and note:
-- New findings (not in previous report)
-- Resolved findings (in previous but not current)
-- Unchanged findings (still present)
+Write the dashboard + remediation plan to
+`dev/local/audit-results/{YYYY-MM-DD}.md`, ending with a summary line
+(`{total} findings: {crit} critical, {high} high, {med} medium, {low} low`).
+Saving the dated report is enough — do not try to diff against previous reports
+(free-text findings have no stable IDs, so the diff is unreliable).
 
-### Step 6: Offer next steps
+## Step 5: Next steps
 
-After presenting the report:
+- If CRITICAL findings exist: offer to fix them now.
+- Otherwise: "Setup is clean — consider scheduling periodic audits with `/schedule`."
 
-- If CRITICAL findings exist: "Fix critical issues now?"
-- If any finding has effort > 1hr: "Create PRD for {finding}?"
-- If no findings: "Setup is clean. Consider scheduling periodic audits with `/schedule`."
+Follow the consent boundary in `reference/conventions.md`: ask before any change.
