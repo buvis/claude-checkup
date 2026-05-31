@@ -69,7 +69,7 @@ UNRELEASED=$(awk '/^## \[Unreleased\]/{found=1; next} /^## \[/{exit} found{print
 echo "$UNRELEASED" | grep -q '^### ' || { echo "Error: [Unreleased] section empty - add entries before releasing" >&2; exit 1; }
 
 step "running tests"
-uv run --with pytest python -m pytest "$REPO_ROOT/skills" -q
+uv run --with pytest python -m pytest "$REPO_ROOT" -q
 
 # --- Compute new version ---
 

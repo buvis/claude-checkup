@@ -2,25 +2,22 @@
 
 [![GitHub license](https://img.shields.io/github/license/buvis/claude-checkup)](https://github.com/buvis/claude-checkup/blob/master/LICENSE)
 
-A health-check toolkit for [Claude Code](https://claude.ai/code). Thirteen focused audit skills plus a single orchestrator that runs them all, prints a dashboard, and produces a prioritized remediation plan.
+A health-check toolkit for [Claude Code](https://claude.ai/code). Five focused
+audit skills plus a single orchestrator that runs them all, prints a dashboard,
+and produces a prioritized remediation plan. Deterministic work runs in helper
+scripts (so audits are reproducible); judgment calls stay with the model.
 
 ## What it audits
 
 | Skill | Catches |
 |-------|---------|
-| `audit-security` | Hardcoded secrets, loose permission patterns, hook injection, risky MCP servers |
-| `audit-permissions` | Permission sprawl, unused grants, escalations |
-| `audit-hooks` | Missing scripts, non-executable hooks, silent failures, slow hooks |
-| `audit-settings` | Conflicts across global / project / local scopes, redundant overrides |
-| `audit-mcp-health` | Disconnected MCP servers, stale config, last-used tracking |
-| `audit-plugins` | Stale cached plugin versions, unused installs, disk reclaimable |
-| `audit-memory` | Orphan memories, missing entries in `MEMORY.md` index |
-| `audit-skills` | Skill structural validation, frontmatter, trigger patterns |
-| `audit-rules` | Conflicts, shadowing, redundancies, staleness across rule files |
-| `audit-context` | Per-component token overhead, cache classification |
-| `audit-sessions` | Patterns, anomalies, unused skills across past sessions |
-| `audit-project-orphans` | Stale project configs in `~/.claude/projects/` |
-| `audit-claude-config` | **Orchestrator** — runs them all, prints dashboard, builds remediation plan |
+| `audit-config` | Loose permissions, hardcoded secrets, hook health/injection, risky MCP servers, cross-level settings conflicts |
+| `audit-filesystem` | Stale/orphaned plugin caches, orphaned and dormant project configs, memory index drift and stale memories |
+| `audit-authoring` | Skill structure/frontmatter, duplicate or confusable skills, rule conflicts/redundancy/shadowing/staleness |
+| `audit-context` | Per-component token overhead, classified as always-loaded / hidden tax / on-demand |
+| `audit-mcp-health` | Configured MCP servers vs live tools, disconnected servers, last-used tracking |
+| `audit-sessions` | Patterns, anomalies, and unused skills across past session transcripts |
+| `audit-claude-config` | **Orchestrator** — runs them all, prints a dashboard, builds a remediation plan |
 
 ## Install
 
@@ -50,14 +47,14 @@ Restart Claude Code, then run `/audit-claude-config` to get a full health report
 
 ```
 audit my claude config        # run everything, build remediation plan
-audit security                # security-only audits
-audit health                  # health-only audits
-audit efficiency              # efficiency audits (slower)
+audit my claude config fast   # skip the slow session-transcript audit
 ```
 
-Or invoke any individual audit by name, e.g. `audit hooks`, `audit memory`, `audit skills`.
+Or invoke any individual audit by name, e.g. `audit security`, `audit hooks`,
+`audit memory`, `audit plugins` — those phrases still route (to `audit-config`,
+`audit-config`, `audit-filesystem`, `audit-filesystem` respectively).
 
-The orchestrator saves a dated report to `dev/local/audit-results/{YYYY-MM-DD}.md` and diffs against the previous report (new findings, resolved findings, unchanged).
+The orchestrator saves a dated report to `dev/local/audit-results/{YYYY-MM-DD}.md`.
 
 ## Severity grading
 
@@ -66,13 +63,17 @@ Each finding gets a severity, prioritized in the remediation plan:
 - **CRITICAL** — fix now (data loss, secret exposure, broken hooks)
 - **HIGH** — fix this week (permission escalations, conflicting rules)
 - **MEDIUM** — fix when convenient (cleanup opportunities)
-- **LOW** — backlog (style, minor consistency)
+- **LOW** — backlog (style, minor consistency, reclaimable disk)
+- **INFO** — context only; never implies a deletion (e.g. "usage could not be determined")
 
 ## Requirements
 
 - Claude Code with plugin support
-- `python3` on PATH (helper scripts in `audit-security` and `audit-sessions`)
-- Optional: [warden](https://github.com/buvis/claude-warden) — if installed, the orchestrator also calls `/warden:review-decisions`
+- `python3` on PATH (helper scripts for `audit-config`, `audit-filesystem`,
+  `audit-context`, `audit-sessions`)
+- `PyYAML` for the skill validator used by `audit-authoring`
+- Optional: [warden](https://github.com/buvis/claude-warden) — if installed, the
+  orchestrator also runs `/warden:review-decisions`
 
 ## License
 

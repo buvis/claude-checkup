@@ -11,13 +11,12 @@ Cross-reference configured MCP servers against the live deferred tool list. Dete
 
 Read `~/.claude/settings.json` and extract the `mcpServers` object. Each key is a server name.
 
-Then scan for project-level MCP configs:
-
-```
-Glob("~/.claude/projects/*/settings.json")
-```
-
-Read each project settings file and extract any `mcpServers` entries. Record for each server:
+Then check project-level MCP configs. Note: `~/.claude/projects/*/` holds session
+transcripts, **not** settings -- do not look there. Project MCP servers live in the
+working directory's `.claude/settings.json` and `.mcp.json`, or under
+`projects.<path>.mcpServers` in `~/.claude.json`. Read whichever exist and extract
+any `mcpServers` entries. (Use `$CLAUDE_CONFIG_DIR` in place of `~/.claude` when it
+is set.) Record for each server:
 - Server name (the JSON key)
 - Source: "global" (from `~/.claude/settings.json`) or "project" with project path
 
@@ -51,6 +50,8 @@ These files are written by the PostToolUse observe-tool hook. Each line is JSON 
 
 For each configured server, find the most recent `ts` value from any matching `mcp__<server>__*` entry across all observation files. Record as "last used" date. If no matches, record "never".
 
+If the observations directory does not exist (the observe-tool hook is not installed), record last-used as "unknown" for every server and skip the never-used finding in Step 5. Absence of telemetry is not evidence that a server is unused.
+
 ## Step 4: Produce the report
 
 Print the table:
@@ -78,8 +79,10 @@ Evaluate each server and list actionable findings numbered sequentially:
 **Disconnected servers** (configured but no tools in deferred list):
 - "{name}: configured but not connected (no tools in deferred list) - check server command/config or remove"
 
-**Never-used servers** (connected but no invocations in observation history):
-- "{name}: connected but never used in session history - consider removing"
+**Never-used servers** (connected, observation telemetry exists, but no invocations):
+- "{name}: connected but no invocations in tracked history - consider removing"
+
+Skip this category entirely when usage telemetry is absent (see Step 3). Never recommend removal based on missing telemetry.
 
 **High tool count** (>20 tools) with low or no usage:
 - "{name}: {count} tools, ~{count * 50} always-loaded tokens in deferred list - verify all needed"
