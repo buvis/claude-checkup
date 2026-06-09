@@ -72,8 +72,10 @@ _BASH_PIPE_RE = re.compile(
 )
 # Single- or double-quoted spans, stripped before the pipe check so a
 # space-padded pipe inside a quoted regex (e.g. `rg 'foo | bar' file`) is
-# not mistaken for a shell pipe.
-_QUOTED_SPAN_RE = re.compile(r"'[^']*'|\"[^\"]*\"")
+# not mistaken for a shell pipe. Double-quoted spans are escape-aware so an
+# escaped quote (`rg "foo \" | bar" file`) doesn't end the span early and
+# expose the quoted pipe; single quotes are literal in bash, so no escaping.
+_QUOTED_SPAN_RE = re.compile(r"'[^']*'|\"(?:\\.|[^\"\\])*\"")
 
 _LEAD_SEGMENT_SPLIT_RE = re.compile(r"\s\|\s|;|&&|\|\|")
 

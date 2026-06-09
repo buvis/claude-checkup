@@ -278,6 +278,14 @@ def test_rule_violation_pipe_ignores_space_padded_quoted_pipe() -> None:
     assert not analyze._check_pipe("rg '(a|b)' .")
 
 
+def test_rule_violation_pipe_ignores_escaped_quote_pipe() -> None:
+    # An escaped double quote inside a double-quoted span must not prematurely
+    # end the masked span and expose the quoted pipe as a shell pipe.
+    assert not analyze._check_pipe('rg "foo \\" | bar" file')
+    # A real heterogeneous pipe after an escaped-quote span still fires.
+    assert analyze._check_pipe('rg "foo \\" bar" file | python -c "print(1)"')
+
+
 def test_skill_inventory_parses_frontmatter(tmp_path: Path) -> None:
     skill_dir = tmp_path / "skills/example-skill"
     skill_dir.mkdir(parents=True)
