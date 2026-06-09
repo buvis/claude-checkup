@@ -70,6 +70,10 @@ _BASH_NEWLINE_RE = re.compile(r"\n\s*\S")
 _BASH_PIPE_RE = re.compile(
     r"\s\|\s+(?!jq\b|grep\b|rg\b|head\b|tail\b|sort\b|uniq\b|wc\b|awk\b|sed\b|cut\b|tr\b|xargs\b|column\b|less\b|more\b|tee\b)\w"
 )
+# Single- or double-quoted spans, stripped before the pipe check so a
+# space-padded pipe inside a quoted regex (e.g. `rg 'foo | bar' file`) is
+# not mistaken for a shell pipe.
+_QUOTED_SPAN_RE = re.compile(r"'[^']*'|\"[^\"]*\"")
 
 _LEAD_SEGMENT_SPLIT_RE = re.compile(r"\s\|\s|;|&&|\|\|")
 
@@ -156,7 +160,9 @@ def _check_multiline(cmd: str) -> bool:
 
 
 def _check_pipe(cmd: str) -> bool:
-    return bool(_BASH_PIPE_RE.search(cmd))
+    # Blank out quoted spans first so a space-padded pipe inside a quoted
+    # regex doesn't read as a shell pipe; pipes outside quotes survive.
+    return bool(_BASH_PIPE_RE.search(_QUOTED_SPAN_RE.sub(" ", cmd)))
 
 
 # -----------------------------------------------------------------------------
