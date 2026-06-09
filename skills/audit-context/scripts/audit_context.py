@@ -55,6 +55,8 @@ def _split_frontmatter(path: Path) -> tuple[int, int]:
         end = text.find("\n---", 3)
         if end != -1:
             return len(text[3:end].split()), len(text[end + 4:].split())
+        # No closing fence found - treat entire file as frontmatter
+        return len(text.split()), 0
     return 0, len(text.split())
 
 
