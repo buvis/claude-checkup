@@ -563,8 +563,7 @@ def analyze(claude_dir: Path, projects_dir: Path, days: int) -> dict:
     findings.extend(detect_compaction_early(sessions))
     invoked, never, unused_findings = detect_unused_skills(sessions, inventory)
     findings.extend(unused_findings)
-    negative_findings = detect_skill_negative_followup(sessions)
-    findings.extend(negative_findings)
+    findings.extend(detect_skill_negative_followup(sessions))
     _annotate_projects(findings, sessions)
 
     counts = [s.message_count for s in sessions]
