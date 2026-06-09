@@ -465,6 +465,8 @@ def detect_token_heavy(sessions: list[SessionData], top_k: int = 10) -> list[dic
                 "evidence": [
                     {
                         "session": s.session_id,
+                        "line": 0,
+                        "snippet": f"{s.message_count} msgs (>{int(threshold)} threshold)",
                         "project": s.project_path,
                         "message_count": s.message_count,
                         "threshold": int(threshold),
@@ -496,6 +498,8 @@ def detect_compaction_early(sessions: list[SessionData]) -> list[dict]:
                 "evidence": [
                     {
                         "session": s.session_id,
+                        "line": early[0],
+                        "snippet": f"compaction at line {early[0]} of {s.message_count}-msg session",
                         "project": s.project_path,
                         "first_compaction_line": early[0],
                         "message_count": s.message_count,

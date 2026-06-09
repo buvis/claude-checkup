@@ -543,6 +543,11 @@ def test_token_heavy_finding_carries_evidence_anchor() -> None:
     assert anchor[0]["project"] == "proj-x"
     assert anchor[0]["message_count"] == 500
     assert anchor[0]["threshold"] == int(findings[0]["details"]["threshold"])
+    # Conform to the standard {session, line, snippet} evidence shape every
+    # other detector emits. A session-level anomaly has no single source line,
+    # so line is 0 (same convention skill_unused uses); snippet describes it.
+    assert anchor[0]["line"] == 0
+    assert isinstance(anchor[0]["snippet"], str) and anchor[0]["snippet"]
 
 
 def test_compaction_early_threshold() -> None:
@@ -582,6 +587,10 @@ def test_compaction_early_finding_carries_evidence_anchor() -> None:
     assert anchor[0]["project"] == "proj-y"
     assert anchor[0]["message_count"] == 90
     assert anchor[0]["first_compaction_line"] == findings[0]["details"]["early_lines"][0]
+    # Conform to the standard {session, line, snippet} evidence shape. Here the
+    # source line is meaningful: it mirrors the first early-compaction line.
+    assert anchor[0]["line"] == anchor[0]["first_compaction_line"]
+    assert isinstance(anchor[0]["snippet"], str) and anchor[0]["snippet"]
 
 
 # -----------------------------------------------------------------------------
