@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **audit-sessions**: drop the duplicate `negative_followup` block from the session report's `skill_usage`; the same skill-negative facts already appear in `findings`.
+
 ## [0.2.0] - 2026-06-09
 
 ### Added

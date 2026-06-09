@@ -561,10 +561,6 @@ def analyze(claude_dir: Path, projects_dir: Path, days: int) -> dict:
         "skill_usage": {
             "invoked": invoked,
             "never_invoked": never,
-            "negative_followup": [
-                {"skill": f["details"]["skill"], "count": f["frequency"]}
-                for f in negative_findings
-            ],
         },
     }
 
