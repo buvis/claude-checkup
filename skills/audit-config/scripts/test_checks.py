@@ -213,3 +213,22 @@ def test_check_secrets_scans_claude_md(tmp_path):
     findings = check_secrets(tmp_path)
     assert any(f.severity == "CRITICAL" and f.line == 1 for f in findings)
     assert any(f.severity == "HIGH" and "downloaded script" in f.title for f in findings)
+
+
+# --- permission boundary matching ---
+
+
+def test_classify_sensitive_path_matches_on_boundary():
+    # exact file under sensitive dir
+    assert classify_permission("Read(~/.ssh/id_rsa)")[0] == "HIGH"
+    # sensitive dir is the entire path (end-of-string boundary)
+    assert classify_permission("Read(~/.ssh)")[0] == "HIGH"
+    # /etc sensitive prefix followed by /
+    assert classify_permission("Read(/etc/passwd)")[0] == "HIGH"
+
+
+def test_classify_sensitive_path_prefix_only_is_not_high():
+    # ~/.sshconfig-backup shares the ~/.ssh prefix but is not under ~/.ssh
+    assert classify_permission("Read(~/.sshconfig-backup)")[0] != "HIGH"
+    # a real file under ~/.ssh whose name contains -backup must still be HIGH
+    assert classify_permission("Read(~/.ssh/id_rsa-backup)")[0] == "HIGH"
