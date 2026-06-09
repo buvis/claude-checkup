@@ -232,3 +232,10 @@ def test_classify_sensitive_path_prefix_only_is_not_high():
     assert classify_permission("Read(~/.sshconfig-backup)")[0] != "HIGH"
     # a real file under ~/.ssh whose name contains -backup must still be HIGH
     assert classify_permission("Read(~/.ssh/id_rsa-backup)")[0] == "HIGH"
+
+
+def test_classify_bash_grant_embedding_sensitive_path_is_high():
+    # regression: a Bash grant that reads a sensitive file embeds the path
+    # after the command word, so the boundary check must scan the whole entry,
+    # not just anchor to the start of the extracted pattern.
+    assert classify_permission("Bash(cat ~/.ssh/id_rsa:*)")[0] == "HIGH"

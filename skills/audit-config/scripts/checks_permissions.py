@@ -58,16 +58,28 @@ def _is_broad_write(entry: str) -> bool:
     return len(segments) <= 1
 
 
+def _grants_sensitive_path(entry: str) -> bool:
+    """True when a sensitive dir appears at a path boundary anywhere in `entry`.
+
+    Boundary means the dir is followed by `/`, `)`, or end-of-string, so
+    `~/.sshconfig-backup` does not match `~/.ssh`, while `~/.ssh/id_rsa` and a
+    Bash grant embedding the path (`Bash(cat ~/.ssh/id_rsa:*)`) do.
+    """
+    for sp in SENSITIVE_PATHS:
+        idx = entry.find(sp)
+        while idx != -1:
+            after = entry[idx + len(sp):]
+            if after == "" or after[0] in "/)":
+                return True
+            idx = entry.find(sp, idx + 1)
+    return False
+
+
 def classify_permission(entry: str) -> tuple[str, str, str]:
     """Return (severity, reason, fix) for one allow-list entry."""
-    # Check for sensitive path matches at path boundaries
-    _, pattern = split_permission(entry)
-    if pattern is not None:
-        for sp in SENSITIVE_PATHS:
-            # Match only at path boundaries
-            if pattern == sp or pattern.startswith(sp + "/"):
-                return ("HIGH", f"grants access to a sensitive path: {entry}",
-                        "Remove the sensitive path unless strictly required")
+    if _grants_sensitive_path(entry):
+        return ("HIGH", f"grants access to a sensitive path: {entry}",
+                "Remove the sensitive path unless strictly required")
     if _UNRESTRICTED.match(entry):
         return ("CRITICAL", f"{entry} grants unrestricted access",
                 "Restrict to specific commands or paths")
