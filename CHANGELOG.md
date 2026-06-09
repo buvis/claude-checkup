@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-09
+
 ### Added
 
 - **audit-config**: one scripted audit of settings.json covering permission risk, hook health (all event types; existence, executability, suppression, injection, performance), cross-level settings conflicts, hardcoded secrets, and risky MCP servers. Merges the old `audit-security`, `audit-permissions`, `audit-hooks`, and `audit-settings`.
