@@ -31,7 +31,7 @@ The output schema (top level):
 - `scanned`: counts and date range
 - `findings`: array of finding records, each with `category`, `classification`,
   `title`, `frequency`, `sessions`, `projects`, `evidence[]`, `details{}`
-- `skill_usage`: `{invoked: {name: count}, never_invoked: [name], negative_followup: [{skill, count}]}`
+- `skill_usage`: `{invoked: {name: count}, never_invoked: [name]}`
 
 Categories the script emits: `tool_sequence`, `repeated_prompt`,
 `rule_violation`, `rejection_storm`, `skill_unused`, `skill_negative`,
