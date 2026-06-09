@@ -89,7 +89,10 @@ def test_unclosed_fence_counts_words_as_frontmatter_not_zero(tmp_path):
         "its words must count toward always-loaded budget"
     )
 
-    # control: a well-formed closed-fence file must actually split (body > 0)
+
+def test_closed_fence_splits_frontmatter_from_body(tmp_path):
+    # control for the over-count fix: a well-formed file must still split so the
+    # body is not folded into frontmatter (kills an all-frontmatter shortcut).
     good = tmp_path / "good.md"
     good.write_text("---\nname: foo\ndescription: a b c\n---\nbody word one two three\n")
     fm, body = audit_context._split_frontmatter(good)
