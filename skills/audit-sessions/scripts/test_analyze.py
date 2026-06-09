@@ -265,6 +265,19 @@ def test_rule_violation_pipe_homogeneous_allowed() -> None:
     assert not analyze._check_pipe("rg '(alpha|beta)' .")
 
 
+def test_rule_violation_pipe_ignores_space_padded_quoted_pipe() -> None:
+    # A space-padded pipe inside a quoted regex must NOT be flagged as a
+    # heterogeneous bash pipe (the false positive R2 fixes).
+    assert not analyze._check_pipe("rg 'foo | bar' file")
+    assert not analyze._check_pipe('rg "foo | bar" file')
+    # A real heterogeneous pipe outside quotes still fires...
+    assert analyze._check_pipe("cat x | python -c 'print(1)'")
+    # ...including when a quoted span sits before the real pipe.
+    assert analyze._check_pipe("rg 'pat' file | python -c 'print(1)'")
+    # No-whitespace quoted alternation stays clean.
+    assert not analyze._check_pipe("rg '(a|b)' .")
+
+
 def test_skill_inventory_parses_frontmatter(tmp_path: Path) -> None:
     skill_dir = tmp_path / "skills/example-skill"
     skill_dir.mkdir(parents=True)
