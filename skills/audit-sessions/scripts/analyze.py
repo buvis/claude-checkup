@@ -460,7 +460,14 @@ def detect_token_heavy(sessions: list[SessionData], top_k: int = 10) -> list[dic
                 "frequency": 1,
                 "sessions": [s.session_id],
                 "projects": [s.project_path],
-                "evidence": [],
+                "evidence": [
+                    {
+                        "session": s.session_id,
+                        "project": s.project_path,
+                        "message_count": s.message_count,
+                        "threshold": int(threshold),
+                    }
+                ],
                 "details": {"message_count": s.message_count, "threshold": threshold},
             }
         )
@@ -484,7 +491,14 @@ def detect_compaction_early(sessions: list[SessionData]) -> list[dict]:
                 "frequency": len(early),
                 "sessions": [s.session_id],
                 "projects": [s.project_path],
-                "evidence": [],
+                "evidence": [
+                    {
+                        "session": s.session_id,
+                        "project": s.project_path,
+                        "first_compaction_line": early[0],
+                        "message_count": s.message_count,
+                    }
+                ],
                 "details": {"early_lines": early, "message_count": s.message_count},
             }
         )

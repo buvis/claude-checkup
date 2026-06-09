@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **audit-sessions**: drop the duplicate `negative_followup` block from the session report's `skill_usage`; the same skill-negative facts already appear in `findings`.
 - **audit-sessions**: the bash-pipe rule no longer flags a space-padded pipe inside a quoted regex (e.g. `rg 'foo | bar' file`); real pipes between heterogeneous commands are still reported.
+- **audit-sessions**: `token_heavy_session` and `compaction_early` findings now carry a concrete `evidence` anchor (session id, project path, and the triggering metric) instead of an empty list.
 
 ## [0.2.0] - 2026-06-09
 
