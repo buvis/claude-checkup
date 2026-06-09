@@ -534,6 +534,7 @@ def test_token_heavy_finding_carries_evidence_anchor() -> None:
     assert anchor[0]["session"] == "big"
     assert anchor[0]["project"] == "proj-x"
     assert anchor[0]["message_count"] == 500
+    assert anchor[0]["threshold"] == int(findings[0]["details"]["threshold"])
 
 
 def test_compaction_early_threshold() -> None:
@@ -572,6 +573,7 @@ def test_compaction_early_finding_carries_evidence_anchor() -> None:
     assert anchor[0]["session"] == "s1"
     assert anchor[0]["project"] == "proj-y"
     assert anchor[0]["message_count"] == 90
+    assert anchor[0]["first_compaction_line"] == findings[0]["details"]["early_lines"][0]
 
 
 # -----------------------------------------------------------------------------
