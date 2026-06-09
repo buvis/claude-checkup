@@ -88,6 +88,12 @@ def test_unclosed_fence_counts_words_as_frontmatter_not_zero(tmp_path):
         "malformed (unclosed-fence) file must not be silently zeroed; "
         "its words must count toward always-loaded budget"
     )
+    assert body_words == 0, (
+        "unclosed fence absorbs entire file as frontmatter; body must be zero"
+    )
+    assert frontmatter_words == len(p.read_text().split()), (
+        "no words must be dropped: every word in the file counts toward always-loaded overhead"
+    )
 
 
 def test_closed_fence_splits_frontmatter_from_body(tmp_path):
