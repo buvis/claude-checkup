@@ -607,3 +607,49 @@ def test_full_pipeline_minimal_fixture(tmp_path: Path) -> None:
     rep = [f for f in result["findings"] if f["category"] == "repeated_prompt"]
     assert rep
     assert rep[0]["frequency"] >= 3
+
+
+def test_skill_negative_not_in_skill_usage_top_level(tmp_path: Path) -> None:
+    """skill_usage must not expose a 'negative_followup' key (R1).
+
+    The canonical negative-followup data must still reach findings as a
+    'skill_negative' category entry when ≥2 correction messages follow a
+    skill invocation.
+    """
+    claude_dir = tmp_path / "claude"
+    projects = claude_dir / "projects"
+    p = projects / "proj"
+
+    # 14-message session: enough to pass the min-message discovery filter.
+    # Structure: preamble → Skill invocation → ≥2 correction user messages →
+    # filler to pad message count.
+    entries = [
+        _user_text("let us start", ts=_now_iso(-130)),
+        _user_text("some context", ts=_now_iso(-120)),
+        _user_text("more context", ts=_now_iso(-110)),
+        _user_text("invoke the skill", ts=_now_iso(-100)),
+        _assistant_tool_use("Skill", {"skill": "myskill"}, "tu_neg_1", ts=_now_iso(-90)),
+        _user_tool_result("tu_neg_1", "skill output", ts=_now_iso(-80)),
+        # Correction message 1
+        _user_text("no, that's wrong", ts=_now_iso(-70)),
+        # Correction message 2
+        _user_text("undo this", ts=_now_iso(-60)),
+        _user_text("filler a", ts=_now_iso(-50)),
+        _user_text("filler b", ts=_now_iso(-40)),
+        _user_text("filler c", ts=_now_iso(-30)),
+        _user_text("filler d", ts=_now_iso(-20)),
+        _user_text("filler e", ts=_now_iso(-10)),
+        _user_text("filler f", ts=_now_iso(0)),
+    ]
+    _write_jsonl(p / "sess_neg.jsonl", entries)
+
+    result = analyze.analyze(claude_dir, projects, days=30)
+
+    # R1-a: negative_followup must NOT appear as a top-level skill_usage key.
+    assert "negative_followup" not in result["skill_usage"]
+
+    # R1-b: the data must still surface in findings under category skill_negative.
+    skill_negative_findings = [
+        f for f in result["findings"] if f["category"] == "skill_negative"
+    ]
+    assert skill_negative_findings, "expected at least one skill_negative finding"
