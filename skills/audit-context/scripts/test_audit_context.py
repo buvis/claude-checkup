@@ -76,3 +76,22 @@ def test_empty_config_is_clean(tmp_path):
     assert res["components"] == []
     assert res["totals"]["loaded_overhead"] == 0
     assert res["pct_of_window"] == 0.0
+
+
+def test_unclosed_fence_counts_words_as_frontmatter_not_zero(tmp_path):
+    p = tmp_path / "SKILL.md"
+    p.write_text("---\nname: foo\ndescription: a b c d\n")  # no closing ---
+
+    frontmatter_words, body_words = audit_context._split_frontmatter(p)
+
+    assert frontmatter_words > 0, (
+        "malformed (unclosed-fence) file must not be silently zeroed; "
+        "its words must count toward always-loaded budget"
+    )
+
+    # control: a well-formed closed-fence file must actually split (body > 0)
+    good = tmp_path / "good.md"
+    good.write_text("---\nname: foo\ndescription: a b c\n---\nbody word one two three\n")
+    fm, body = audit_context._split_frontmatter(good)
+    assert fm > 0
+    assert body > 0
