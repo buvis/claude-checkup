@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **audit-sessions**: drop the duplicate `negative_followup` block from the session report's `skill_usage`; the same skill-negative facts already appear in `findings`.
 - **audit-sessions**: the bash-pipe rule no longer flags a space-padded pipe inside a quoted regex (e.g. `rg 'foo | bar' file`), including escaped quotes (e.g. `rg "foo \" | bar" file`); real pipes between heterogeneous commands are still reported.
 - **audit-sessions**: `token_heavy_session` and `compaction_early` findings now carry a concrete `evidence` anchor matching the standard `session`/`line`/`snippet` shape every other detector emits, plus the triggering metric, instead of an empty list.
+- **audit-config**: sensitive-path grants are matched at a path boundary, so a directory whose name merely starts with a sensitive prefix (e.g. `Read(~/.sshconfig-backup)`) is no longer graded HIGH, while real files under a sensitive dir and Bash grants embedding one (e.g. `Bash(cat ~/.ssh/id_rsa:*)`) stay HIGH.
+- **audit-context**: a SKILL.md that opens a `---` frontmatter fence but never closes it now counts its words toward always-loaded overhead instead of silently reporting zero.
+- **audit-authoring**: rule findings now carry a consistent severity across all five categories (Contradictions, Redundancy, Shadowing, Staleness, CLAUDE.md-overlap), not just Contradictions.
 
 ## [0.2.0] - 2026-06-09
 

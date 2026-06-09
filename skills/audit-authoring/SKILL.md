@@ -79,6 +79,9 @@ project `CLAUDE.md`/`rules/`. Then judge, in this order:
 5. **CLAUDE.md overlap** -- CLAUDE.md repeating what a rule file already covers
    (both are always-loaded, so this wastes context).
 
+Severity (per the scale in `reference/conventions.md`): Contradictions HIGH,
+Shadowing MEDIUM, Staleness MEDIUM, Redundancy LOW, CLAUDE.md overlap LOW.
+
 For each, name the files, explain the conflict, and suggest which file should own
 the guidance (prefer consolidation over deletion).
 
