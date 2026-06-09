@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **audit-config**: sensitive-path grants are matched at a path boundary, so a directory whose name merely starts with a sensitive prefix (e.g. `Read(~/.sshconfig-backup)`) is no longer graded HIGH, while real files under a sensitive dir and Bash grants embedding one (e.g. `Bash(cat ~/.ssh/id_rsa:*)`) stay HIGH.
 - **audit-context**: a SKILL.md that opens a `---` frontmatter fence but never closes it now counts its words toward always-loaded overhead instead of silently reporting zero.
 - **audit-authoring**: rule findings now carry a consistent severity across all five categories (Contradictions, Redundancy, Shadowing, Staleness, CLAUDE.md-overlap), not just Contradictions.
+- **audit-filesystem**: routes again from the secondary trigger phrases "clean plugin cache" and "memory cleanup" (dropped in the v0.2 merge), within the 250-char description budget.
 
 ## [0.2.0] - 2026-06-09
 

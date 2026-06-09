@@ -1,9 +1,9 @@
 ---
 name: audit-filesystem
 description: >-
-  Use to reclaim disk and find stale config under ~/.claude: stale/orphaned plugin
-  caches, orphan and dormant project dirs, memory index drift and stale memories.
-  Triggers on "audit filesystem", "audit plugins", "audit project orphans", "audit memory".
+  Reclaim disk and find stale ~/.claude config: orphaned plugin caches, dormant
+  project dirs, memory drift. Triggers on "audit filesystem", "audit plugins",
+  "audit project orphans", "audit memory", "clean plugin cache", "memory cleanup".
 ---
 
 # Audit Filesystem
