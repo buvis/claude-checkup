@@ -512,6 +512,30 @@ def test_rejection_storm_requires_same_tool_repeated() -> None:
     assert findings[0]["frequency"] == 3
 
 
+def test_token_heavy_finding_carries_evidence_anchor() -> None:
+    def mk(sid: str, count: int) -> analyze.SessionData:
+        return analyze.SessionData(
+            session_id=sid,
+            project_path="proj-x",
+            file_path="",
+            message_count=count,
+            earliest=None,
+            latest=None,
+            user_messages=(),
+            tool_calls=(),
+            skill_invocations=(),
+            compaction_lines=(),
+        )
+
+    sessions = [mk(f"s{i}", 50) for i in range(5)] + [mk("big", 500)]
+    findings = analyze.detect_token_heavy(sessions)
+    anchor = findings[0]["evidence"]
+    assert anchor, "token_heavy finding must carry a concrete evidence anchor"
+    assert anchor[0]["session"] == "big"
+    assert anchor[0]["project"] == "proj-x"
+    assert anchor[0]["message_count"] == 500
+
+
 def test_compaction_early_threshold() -> None:
     sess = analyze.SessionData(
         session_id="s1",
@@ -527,6 +551,27 @@ def test_compaction_early_threshold() -> None:
     )
     findings = analyze.detect_compaction_early([sess])
     assert len(findings) == 1
+
+
+def test_compaction_early_finding_carries_evidence_anchor() -> None:
+    sess = analyze.SessionData(
+        session_id="s1",
+        project_path="proj-y",
+        file_path="",
+        message_count=90,
+        earliest=None,
+        latest=None,
+        user_messages=(),
+        tool_calls=(),
+        skill_invocations=(),
+        compaction_lines=(15,),
+    )
+    findings = analyze.detect_compaction_early([sess])
+    anchor = findings[0]["evidence"]
+    assert anchor, "compaction_early finding must carry a concrete evidence anchor"
+    assert anchor[0]["session"] == "s1"
+    assert anchor[0]["project"] == "proj-y"
+    assert anchor[0]["message_count"] == 90
 
 
 # -----------------------------------------------------------------------------
