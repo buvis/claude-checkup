@@ -15,7 +15,7 @@ from pathlib import Path
 from claude_paths import any_usage_telemetry, iter_jsonl
 from findings import Finding
 
-SENSITIVE_PATHS = ("~/.ssh", "~/.aws", "~/.gnupg", "/etc/")
+SENSITIVE_PATHS = ("~/.ssh", "~/.aws", "~/.gnupg", "/etc")
 DESTRUCTIVE_BASH = frozenset({"docker", "kubectl", "git"})
 _UNRESTRICTED = re.compile(r"^(Bash|Write|Edit|Read)\(\*{1,2}(:\*)?\)$")
 _ROOT_WILDCARD = re.compile(r"^[A-Za-z_]+\(/\*\)$")
@@ -60,9 +60,14 @@ def _is_broad_write(entry: str) -> bool:
 
 def classify_permission(entry: str) -> tuple[str, str, str]:
     """Return (severity, reason, fix) for one allow-list entry."""
-    if any(sp in entry for sp in SENSITIVE_PATHS):
-        return ("HIGH", f"grants access to a sensitive path: {entry}",
-                "Remove the sensitive path unless strictly required")
+    # Check for sensitive path matches at path boundaries
+    _, pattern = split_permission(entry)
+    if pattern is not None:
+        for sp in SENSITIVE_PATHS:
+            # Match only at path boundaries
+            if pattern == sp or pattern.startswith(sp + "/"):
+                return ("HIGH", f"grants access to a sensitive path: {entry}",
+                        "Remove the sensitive path unless strictly required")
     if _UNRESTRICTED.match(entry):
         return ("CRITICAL", f"{entry} grants unrestricted access",
                 "Restrict to specific commands or paths")
