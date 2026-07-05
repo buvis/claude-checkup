@@ -10,7 +10,9 @@ htmlcov/
 .DS_Store
 .idea/
 .vscode/
+.serena/
 
 # Claude Code local settings
 .claude/
 .local/
+dev/local/
