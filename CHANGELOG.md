@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **audit-sessions**: harness-injected messages (`<task-notification>`, `<command-message>`, `[Request interrupted by user...]`) are no longer treated as user prompts, so autopilot task notifications after a Skill call stop producing bogus skill-negative findings and repeated-prompt clusters.
 - **audit-sessions**: drop the duplicate `negative_followup` block from the session report's `skill_usage`; the same skill-negative facts already appear in `findings`.
 - **audit-sessions**: the bash-pipe rule no longer flags a space-padded pipe inside a quoted regex (e.g. `rg 'foo | bar' file`), including escaped quotes (e.g. `rg "foo \" | bar" file`); real pipes between heterogeneous commands are still reported.
 - **audit-sessions**: `token_heavy_session` and `compaction_early` findings now carry a concrete `evidence` anchor matching the standard `session`/`line`/`snippet` shape every other detector emits, plus the triggering metric, instead of an empty list.

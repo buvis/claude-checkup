@@ -65,9 +65,12 @@ class SkillMeta:
 _SYNTHETIC_USER_PREFIXES = (
     "<local-command-caveat>",
     "<command-name>",
+    "<command-message>",
     "<command-stdout>",
     "<local-command-stdout>",
     "<system-reminder>",
+    "<task-notification>",
+    "[Request interrupted by user",
 )
 
 

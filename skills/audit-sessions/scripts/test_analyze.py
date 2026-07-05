@@ -110,6 +110,37 @@ def test_extract_user_messages_skips_meta(tmp_path: Path) -> None:
     ]
 
 
+def test_harness_injected_messages_are_not_user_prompts(tmp_path: Path) -> None:
+    """Task notifications, command wrappers, and interrupt markers are synthetic.
+
+    Regression: autopilot <task-notification> blobs after a Skill call were
+    counted as user messages, matched correction tokens, and produced bogus
+    skill_negative findings (e.g. "Skill 'work' had 143 negative follow-ups").
+    """
+    p = tmp_path / "proj/sess.jsonl"
+    _write_jsonl(
+        p,
+        [
+            _assistant_tool_use("Skill", {"skill": "work"}, "tu_1"),
+            _user_text(
+                "<task-notification> <task-id>a27939ad</task-id> "
+                "<output>3 tests wrong, stop and revert</output> </task-notification>"
+            ),
+            _user_text("<command-message>run-autopilot</command-message> "
+                       "<command-name>/run-autopilot</command-name>"),
+            _user_text("[Request interrupted by user]"),
+            _user_text("[Request interrupted by user for tool use]"),
+            _user_text("real correction: no, that's wrong"),
+        ],
+    )
+    sess = analyze.parse_session(p)
+    assert sess is not None
+    assert [um.text for um in sess.user_messages] == [
+        "real correction: no, that's wrong",
+    ]
+    assert sess.user_messages[0].follows_skill == "work"
+
+
 def test_extract_user_messages_handles_list_content(tmp_path: Path) -> None:
     p = tmp_path / "proj/sess.jsonl"
     entries = [
