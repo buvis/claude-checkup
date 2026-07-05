@@ -8,7 +8,7 @@
     {
       "name": "claude-checkup",
       "description": "6 audit skills + orchestrator that produces a prioritized remediation plan for your Claude Code setup",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "author": {
         "name": "buvis"
       },

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-05
+
 ### Fixed
 
 - **audit-sessions**: harness-injected messages (`<task-notification>`, `<command-message>`, `[Request interrupted by user...]`) are no longer treated as user prompts, so autopilot task notifications after a Skill call stop producing bogus skill-negative findings and repeated-prompt clusters.
