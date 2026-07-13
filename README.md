@@ -75,6 +75,20 @@ Each finding gets a severity, prioritized in the remediation plan:
 - Optional: [warden](https://github.com/buvis/claude-warden) — if installed, the
   orchestrator also runs `/warden:review-decisions`
 
+## Releasing
+
+`dev/bin/release [patch|minor|major]` is a thin shim. The shared release
+script lives in the central marketplace repo,
+[buvis/claude-plugins](https://github.com/buvis/claude-plugins), and every
+release also bumps this plugin's entry there. Developing this plugin
+therefore needs that repo cloned beside this one:
+
+```bash
+git clone git@github.com:buvis/claude-plugins.git ../claude-plugins
+```
+
+Repo-specific pre-release checks live in `dev/bin/release-checks`.
+
 ## License
 
 MIT

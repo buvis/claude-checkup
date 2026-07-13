@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Pre-release checks for claude-checkup.
+# Run by claude-plugins/scripts/release-plugin with CWD = repo root.
+set -euo pipefail
+
+uv run --with pytest python -m pytest . -q
