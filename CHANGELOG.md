@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **audit-claude-config**: the description now leads with "runs EVERY audit at once into one merged report" and points at `audit-config` for settings.json alone, so the two skills stop competing over near-identical trigger phrases ("audit config" vs "audit claude config").
+
 ## [0.2.1] - 2026-07-05
 
 ### Fixed

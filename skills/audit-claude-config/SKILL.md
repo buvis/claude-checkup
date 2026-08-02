@@ -1,6 +1,6 @@
 ---
 name: audit-claude-config
-description: Use when performing a Claude Code health check or reviewing setup quality. Triggers on "audit claude config", "full audit", "health check", "audit everything", "check my setup".
+description: Use when running EVERY audit at once into one merged report, not a single dimension. For settings.json alone use audit-config. Triggers on "full config health check", "audit everything", "health check", "check my setup", "audit claude config".
 ---
 
 # Audit Claude Config
