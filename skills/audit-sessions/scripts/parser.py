@@ -61,6 +61,18 @@ class SkillMeta:
 # JSONL entry classification helpers
 # -----------------------------------------------------------------------------
 
+# promptSource values that mean "a machine wrote this prompt". Autopilot
+# dispatches reviewers and implementors through the SDK, and each such session
+# opens with a generated persona prompt ("You are Pat, the per-task code
+# reviewer...") carrying role=user and no isMeta, so nothing else here catches
+# it. Measured 2026-08-26 over 406 transcripts: 170 of the 416 prompts that
+# survived this function were promptSource "sdk".
+#
+# A negative check on this field, rather than a positive check on
+# origin.kind == "human", is deliberate: 1 of those 416 came from a transcript
+# predating both fields, and a positive check would silently drop it.
+_MACHINE_PROMPT_SOURCES = frozenset({"sdk"})
+
 # User content wrappers that mark a non-user system message.
 _SYNTHETIC_USER_PREFIXES = (
     "<local-command-caveat>",
@@ -90,6 +102,8 @@ def _content_to_text(content: Any) -> str:
 def _is_real_user_prompt(entry: dict) -> bool:
     """True if this entry represents a genuine user-typed prompt."""
     if entry.get("type") != "user" or entry.get("isMeta"):
+        return False
+    if entry.get("promptSource") in _MACHINE_PROMPT_SOURCES:
         return False
     msg = entry.get("message") or {}
     if msg.get("role") != "user":

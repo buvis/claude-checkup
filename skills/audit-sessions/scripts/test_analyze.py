@@ -26,14 +26,22 @@ def _ago_iso(days: int) -> str:
     ).isoformat().replace("+00:00", "Z")
 
 
-def _user_text(text: str, ts: str | None = None, is_meta: bool = False) -> dict:
-    return {
+def _user_text(
+    text: str,
+    ts: str | None = None,
+    is_meta: bool = False,
+    prompt_source: str | None = None,
+) -> dict:
+    entry = {
         "type": "user",
         "isMeta": is_meta,
         "message": {"role": "user", "content": text},
         "timestamp": ts or _now_iso(),
         "sessionId": "test",
     }
+    if prompt_source is not None:
+        entry["promptSource"] = prompt_source
+    return entry
 
 
 def _assistant_tool_use(
@@ -139,6 +147,46 @@ def test_harness_injected_messages_are_not_user_prompts(tmp_path: Path) -> None:
         "real correction: no, that's wrong",
     ]
     assert sess.user_messages[0].follows_skill == "work"
+
+
+def test_sdk_driven_prompts_are_not_user_prompts(tmp_path: Path) -> None:
+    """A headless SDK prompt is machine-written, not typed.
+
+    Regression: autopilot dispatches reviewers and implementors through the SDK,
+    and each of those sessions opens with a generated persona prompt ("You are
+    Pat, the per-task code reviewer..."). Those carry role=user and no isMeta, so
+    they passed every existing filter. Measured 2026-08-26 over 406 transcripts:
+    416 prompts survived _is_real_user_prompt, of which 170 were promptSource
+    "sdk" - a 41% over-count feeding every prompt-based detector.
+
+    The schema names them, so this needs no text heuristic: typed turns carry
+    promptSource "typed"/"suggestion_accepted"/"queued" (and origin.kind
+    "human"), SDK ones carry "sdk". Filtering on the field rather than on
+    origin.kind is deliberate: 1 of 416 entries came from a transcript old
+    enough to carry neither field, and a positive origin check would drop it.
+    """
+    p = tmp_path / "proj/sess.jsonl"
+    _write_jsonl(
+        p,
+        [
+            _user_text("real typed prompt", prompt_source="typed"),
+            _user_text(
+                "You are Pat, the per-task code reviewer. Never skip a finding.",
+                prompt_source="sdk",
+            ),
+            _user_text("accepted a suggestion", prompt_source="suggestion_accepted"),
+            _user_text("queued while busy", prompt_source="queued"),
+            _user_text("old transcript, no promptSource field"),
+        ],
+    )
+    sess = analyze.parse_session(p)
+    assert sess is not None
+    assert [um.text for um in sess.user_messages] == [
+        "real typed prompt",
+        "accepted a suggestion",
+        "queued while busy",
+        "old transcript, no promptSource field",
+    ]
 
 
 def test_extract_user_messages_handles_list_content(tmp_path: Path) -> None:

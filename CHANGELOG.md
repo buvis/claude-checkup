@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **audit-sessions**: SDK-driven prompts (`promptSource: "sdk"`) are no longer counted as user prompts, so the generated persona prompts that open every autopilot reviewer and implementor session stop inflating repeated-prompt, skill-negative and rule-violation findings. Measured over 406 transcripts: 170 of 416 surviving prompts were machine-written, a 41% over-count.
 - **audit-claude-config**: the description now leads with "runs EVERY audit at once into one merged report" and points at `audit-config` for settings.json alone, so the two skills stop competing over near-identical trigger phrases ("audit config" vs "audit claude config").
 
 ## [0.2.1] - 2026-07-05
