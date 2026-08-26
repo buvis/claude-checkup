@@ -27,12 +27,12 @@ def test_config_dir_defaults_to_home_dotclaude(monkeypatch):
 
 
 def test_decode_simple_path():
-    assert decode_project_dir("-Users-bob-git") == "/Users/bob/git"
+    assert decode_project_dir("-Users-you-git") == "/Users/you/git"
 
 
 def test_decode_keeps_double_slash_for_dot_segments():
     # `/.` encodes to `--`, decoding naively yields `//` which the resolver corrects.
-    assert decode_project_dir("-Users-bob--claude") == "/Users/bob//claude"
+    assert decode_project_dir("-Users-you--claude") == "/Users/you//claude"
 
 
 def test_resolve_prefers_sessions_index(tmp_path):
