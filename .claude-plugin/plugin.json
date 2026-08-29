@@ -1,6 +1,6 @@
 {
   "name": "claude-checkup",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Health-check and audit skills for Claude Code covering settings/config (permissions, hooks, secrets, MCP risk), filesystem hygiene, authoring (skills, rules), context budget, MCP health, and sessions, plus an orchestrator that produces a remediation plan",
   "author": {
     "name": "buvis"
